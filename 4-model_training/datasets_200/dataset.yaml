@@ -1,0 +1,15 @@
+# YOLOv8 数据集配置文件（未划分）
+# 自动生成
+
+# 数据集路径（相对于此yaml文件的路径）
+path: D:\competition\competition_2026_cxcy\4-model_training\datasets_200
+
+# 训练集和验证集图像路径
+train: images
+val: images
+
+# 类别数量
+nc: 3
+
+# 类别名称
+names: ['capacitor', 'connector', 'terminal']

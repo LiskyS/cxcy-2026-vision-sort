@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>基于视觉模型的电子元器件分拣产线示意图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1 {
+    color: #58a6ff;
+    font-size: 22px;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(88,166,255,0.5);
+  }
+  .subtitle {
+    color: #8b949e;
+    font-size: 13px;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+  .diagram-container {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    width: 1200px;
+    max-width: 100%;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #c9d1d9;
+    font-size: 13px;
+  }
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+  .step-numbers {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #1c2128;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 10px 16px;
+    max-width: 220px;
+  }
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  .step-text {
+    color: #8b949e;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚙ 基于视觉模型的电子元器件智能分拣产线</h1>
+<p class="subtitle">Vision-Based Electronic Component Intelligent Sorting Line</p>
+
+<div class="diagram-container">
+<svg viewBox="0 0 1140 620" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 传送带纹理 -->
+    <pattern id="belt-pattern" x="0" y="0" width="20" height="10" patternUnits="userSpaceOnUse">
+      <rect width="20" height="10" fill="#2a5a3a"/>
+      <rect x="0" y="0" width="18" height="8" rx="1" fill="#1e4a2e" opacity="0.6"/>
+      <line x1="0" y1="5" x2="20" y2="5" stroke="#3d7a54" stroke-width="0.5" opacity="0.5"/>
+    </pattern>
+    <!-- 金属纹理 -->
+    <linearGradient id="metal-v" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a5568"/>
+      <stop offset="50%" stop-color="#718096"/>
+      <stop offset="100%" stop-color="#4a5568"/>
+    </linearGradient>
+    <linearGradient id="metal-h" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4a5568"/>
+      <stop offset="50%" stop-color="#718096"/>
+      <stop offset="100%" stop-color="#4a5568"/>
+    </linearGradient>
+    <!-- 蓝色渐变 -->
+    <linearGradient id="blue-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a4a8a"/>
+      <stop offset="100%" stop-color="#0d2d5a"/>
+    </linearGradient>
+    <!-- 绿色渐变 -->
+    <linearGradient id="green-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a5a3a"/>
+      <stop offset="100%" stop-color="#0d3a25"/>
+    </linearGradient>
+    <!-- 橙色渐变 -->
+    <linearGradient id="orange-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c45c1a"/>
+      <stop offset="100%" stop-color="#8a3a10"/>
+    </linearGradient>
+    <!-- 屏幕渐变 -->
+    <linearGradient id="screen-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#051020"/>
+    </linearGradient>
+    <!-- 平台渐变 -->
+    <linearGradient id="platform-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0d1e3a"/>
+    </linearGradient>
+    <!-- 箭头标记 -->
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#58a6ff"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3fb950"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f0883e"/>
+    </marker>
+    <marker id="arrow-white" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#c9d1d9"/>
+    </marker>
+    <!-- 发光滤镜 -->
+    <filter id="glow-blue" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-green" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- 圆角 -->
+    <clipPath id="screen-clip">
+      <rect x="855" y="170" width="230" height="160" rx="6"/>
+    </clipPath>
+    <clipPath id="chip-clip">
+      <rect x="0" y="0" width="40" height="30" rx="3"/>
+    </clipPath>
+  </defs>
+
+  <!-- ===== 背景网格 ===== -->
+  <rect width="1140" height="620" fill="#0d1117" rx="12"/>
+  <pattern id="grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#21262d" stroke-width="0.5"/>
+  </pattern>
+  <rect width="1140" height="620" fill="url(#grid)" rx="12"/>
+
+  <!-- ===== 区域标注背景 ===== -->
+  <!-- 进料区 -->
+  <rect x="10" y="10" width="180" height="600" rx="10" fill="#1c2128" stroke="#30363d" stroke-width="1" opacity="0.5"/>
+  <text x="100" y="30" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="bold" opacity="0.8">① 进料区</text>
+
+  <!-- 检测区 -->
+  <rect x="200" y="10" width="440" height="600" rx="10" fill="#1a2535" stroke="#30363d" stroke-width="1" opacity="0.5"/>
+  <text x="420" y="30" text-anchor="middle" fill="#3fb950" font-size="12" font-weight="bold" opacity="0.8">② 视觉检测与分拣区</text>
+
+  <!-- 控制区 -->
+  <rect x="650" y="10" width="260" height="600" rx="10" fill="#1c2128" stroke="#30363d" stroke-width="1" opacity="0.5"/>
+  <text x="780" y="30" text-anchor="middle" fill="#f0883e" font-size="12" font-weight="bold" opacity="0.8">③ AI 控制系统</text>
+
+  <!-- 出料区 -->
+  <rect x="920" y="10" width="210" height="600" rx="10" fill="#1c2128" stroke="#30363d" stroke-width="1" opacity="0.5"/>
+  <text x="1025" y="30" text-anchor="middle" fill="#79c0ff" font-size="12" font-weight="bold" opacity="0.8">④ 分拣出料区</text>
+
+  <!-- ===== 1. 进料传送带 ===== -->
+  <!-- 传送带支架 -->
+  <rect x="25" y="250" width="185" height="8" rx="3" fill="url(#metal-h)"/>
+  <rect x="25" y="340" width="185" height="8" rx="3" fill="url(#metal-h)"/>
+  <!-- 传送带面 -->
+  <rect x="25" y="258" width="185" height="82" rx="2" fill="url(#belt-pattern)"/>
+  <!-- 传送带纹理线 -->
+  <line x1="25" y1="270" x2="210" y2="270" stroke="#3d7a54" stroke-width="0.8" opacity="0.6"/>
+  <line x1="25" y1="285" x2="210" y2="285" stroke="#3d7a54" stroke-width="0.8" opacity="0.6"/>
+  <line x1="25" y1="300" x2="210" y2="300" stroke="#3d7a54" stroke-width="0.8" opacity="0.6"/>
+  <line x1="25" y1="315" x2="210" y2="315" stroke="#3d7a54" stroke-width="0.8" opacity="0.6"/>
+  <line x1="25" y1="330" x2="210" y2="330" stroke="#3d7a54" stroke-width="0.8" opacity="0.6"/>
+  <!-- 滚轮 -->
+  <ellipse cx="35" cy="299" rx="8" ry="42" fill="#4a5568" stroke="#718096" stroke-width="1.5"/>
+  <ellipse cx="35" cy="299" rx="4" ry="20" fill="#2d3748"/>
+  <ellipse cx="200" cy="299" rx="8" ry="42" fill="#4a5568" stroke="#718096" stroke-width="1.5"/>
+  <ellipse cx="200" cy="299" rx="4" ry="20" fill="#2d3748"/>
+  <!-- 支腿 -->
+  <rect x="50" y="348" width="10" height="50" rx="2" fill="#4a5568"/>
+  <rect x="170" y="348" width="10" height="50" rx="2" fill="#4a5568"/>
+  <rect x="40" y="395" width="140" height="6" rx="2" fill="#4a5568"/>
+
+  <!-- 传送带方向箭头 -->
+  <line x1="60" y1="299" x2="140" y2="299" stroke="#3fb950" stroke-width="2" marker-end="url(#arrow-green)" opacity="0.8"/>
+
+  <!-- 电子元器件（进料中） -->
+  <!-- 电阻 -->
+  <g transform="translate(50, 265)">
+    <rect x="0" y="5" width="30" height="14" rx="2" fill="#c45c1a" stroke="#a04010" stroke-width="1"/>
+    <line x1="-6" y1="12" x2="0" y2="12" stroke="#c9d1d9" stroke-width="2"/>
+    <line x1="30" y1="12" x2="36" y2="12" stroke="#c9d1d9" stroke-width="2"/>
+    <rect x="6" y="7" width="3" height="10" fill="#ffd700" opacity="0.7"/>
+    <rect x="12" y="7" width="3" height="10" fill="#2196F3" opacity="0.7"/>
+    <rect x="18" y="7" width="3" height="10" fill="#ffd700" opacity="0.7"/>
+    <text x="15" y="32" text-anchor="middle" fill="#8b949e" font-size="8">电阻</text>
+  </g>
+  <!-- 电容 -->
+  <g transform="translate(105, 263)">
+    <rect x="0" y="0" width="18" height="22" rx="9" fill="#3a8abd" stroke="#2a6a9d" stroke-width="1"/>
+    <line x1="9" y1="22" x2="9" y2="30" stroke="#c9d1d9" stroke-width="2"/>
+    <text x="9" y="38" text-anchor="middle" fill="#8b949e" font-size="8">电容</text>
+  </g>
+  <!-- 芯片 -->
+  <g transform="translate(145, 260)">
+    <rect x="0" y="0" width="32" height="26" rx="2" fill="#1a1a2e" stroke="#58a6ff" stroke-width="1.5"/>
+    <rect x="4" y="4" width="24" height="18" rx="1" fill="#0a0a1a"/>
+    <text x="16" y="17" text-anchor="middle" fill="#58a6ff" font-size="7" font-weight="bold">IC</text>
+    <!-- 引脚 -->
+    <line x1="8" y1="0" x2="8" y2="-4" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="16" y1="0" x2="16" y2="-4" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="24" y1="0" x2="24" y2="-4" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="8" y1="26" x2="8" y2="30" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="16" y1="26" x2="16" y2="30" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="24" y1="26" x2="24" y2="30" stroke="#c9d1d9" stroke-width="1.5"/>
+    <text x="16" y="40" text-anchor="middle" fill="#8b949e" font-size="8">芯片</text>
+  </g>
+
+  <!-- 标签 -->
+  <rect x="30" y="410" width="150" height="22" rx="4" fill="#1c2128" stroke="#30363d"/>
+  <text x="105" y="425" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="bold">进料传送带</text>
+
+  <!-- ===== 2. 检测平台 ===== -->
+  <!-- 平台底座 -->
+  <rect x="215" y="230" width="290" height="140" rx="8" fill="#1e3a5f" stroke="#2a5a8a" stroke-width="2"/>
+  <rect x="220" y="235" width="280" height="130" rx="6" fill="url(#platform-grad)"/>
+  <!-- 平台照明效果 -->
+  <rect x="225" y="240" width="270" height="120" rx="5" fill="none" stroke="#58a6ff" stroke-width="0.5" opacity="0.5"/>
+  <!-- 光晕 -->
+  <ellipse cx="360" cy="300" rx="130" ry="55" fill="#1a3a6a" opacity="0.4"/>
+  <ellipse cx="360" cy="300" rx="80" ry="35" fill="#204060" opacity="0.5"/>
+
+  <!-- 平台上的元器件（被检测中） -->
+  <!-- 中央元器件 - 带检测框 -->
+  <g transform="translate(330, 270)">
+    <!-- 检测框动态效果 -->
+    <rect x="-5" y="-5" width="60" height="50" rx="3" fill="none" stroke="#3fb950" stroke-width="2" stroke-dasharray="4,2"/>
+    <!-- 十字准星 -->
+    <line x1="25" y1="-12" x2="25" y2="-5" stroke="#3fb950" stroke-width="1.5" opacity="0.8"/>
+    <line x1="25" y1="45" x2="25" y2="52" stroke="#3fb950" stroke-width="1.5" opacity="0.8"/>
+    <line x1="-12" y1="20" x2="-5" y2="20" stroke="#3fb950" stroke-width="1.5" opacity="0.8"/>
+    <line x1="55" y1="20" x2="62" y2="20" stroke="#3fb950" stroke-width="1.5" opacity="0.8"/>
+    <!-- 芯片元件 -->
+    <rect x="2" y="2" width="46" height="36" rx="3" fill="#1a1a2e" stroke="#58a6ff" stroke-width="2"/>
+    <rect x="6" y="6" width="38" height="28" rx="1" fill="#0a0a1a"/>
+    <text x="25" y="24" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="bold">QFP</text>
+    <!-- 引脚 -->
+    <line x1="10" y1="2" x2="10" y2="-3" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="18" y1="2" x2="18" y2="-3" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="26" y1="2" x2="26" y2="-3" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="34" y1="2" x2="34" y2="-3" stroke="#c9d1d9" stroke-width="1.5"/>
+    <line x1="42" y1="2" x2="42" y2="-3" stroke="#c9d1d9" stroke-width="1.5"/>
+    <!-- 识别标签 -->
+    <rect x="-5" y="45" width="60" height="14" rx="3" fill="#0a2a0a" stroke="#3fb950" stroke-width="1"/>
+    <text x="25" y="56" text-anchor="middle" fill="#3fb950" font-size="8" font-weight="bold">✓ IC芯片</text>
+  </g>
+
+  <!-- 旁边的电阻元件 -->
+  <g transform="translate(240, 280)">
+    <rect x="0" y="5" width="35" height="16" rx="2" fill="#c45c1a" stroke="#a04010" stroke-width="1"/>
+    <line x1="-6" y1="13" x2="0" y2="13" stroke="#c9d1d9" stroke-width="2"/>
+    <line x1="35" y1="13" x2="41" y2="13" stroke="#c9d1d9" stroke-width="2"/>
+    <rect x="6" y="8" width="4" height="10" fill="#ffd700" opacity="0.8"/>
+    <rect x="14" y="8" width="4" height="10" fill="#ff5722" opacity="0.8"/>
+    <rect x="22" y="8" width="4" height="10" fill="#ffd700" opacity="0.8"/>
+  </g>
+
+  <!-- 电感元件 -->
+  <g transform="translate(410, 278)">
+    <ellipse cx="15" cy="14" rx="14" ry="14" fill="#2d6a4f" stroke="#1b4332" stroke-width="2"/>
+    <ellipse cx="15" cy="14" rx="8" ry="8" fill="#1b4332"/>
+    <path d="M 5,14 Q 8,6 15,6 Q 22,6 25,14" fill="none" stroke="#c9d1d9" stroke-width="2"/>
+    <line x1="15" y1="28" x2="15" y2="35" stroke="#c9d1d9" stroke-width="2"/>
+  </g>
+
+  <!-- 平台支腿 -->
+  <rect x="240" y="370" width="12" height="40" rx="2" fill="#4a5568"/>
+  <rect x="468" y="370" width="12" height="40" rx="2" fill="#4a5568"/>
+  <rect x="225" y="408" width="270" height="8" rx="3" fill="#4a5568"/>
+
+  <!-- 平台标签 -->
+  <rect x="255" y="414" width="210" height="22" rx="4" fill="#1c2128" stroke="#2a5a8a"/>
+  <text x="360" y="429" text-anchor="middle" fill="#79c0ff" font-size="11" font-weight="bold">智能检测平台（蓝光照明）</text>
+
+  <!-- ===== 3. 高清摄像头系统 ===== -->
+  <!-- 龙门架横梁 -->
+  <rect x="205" y="100" width="440" height="16" rx="4" fill="url(#metal-h)" stroke="#4a5568" stroke-width="1"/>
+  <!-- 立柱 -->
+  <rect x="205" y="100" width="16" height="145" rx="3" fill="url(#metal-v)" stroke="#4a5568" stroke-width="1"/>
+  <rect x="629" y="100" width="16" height="145" rx="3" fill="url(#metal-v)" stroke="#4a5568" stroke-width="1"/>
+  <!-- 立柱底座 -->
+  <rect x="198" y="240" width="30" height="12" rx="3" fill="#4a5568"/>
+  <rect x="622" y="240" width="30" height="12" rx="3" fill="#4a5568"/>
+
+  <!-- 相机支架 -->
+  <rect x="333" y="116" width="14" height="40" rx="2" fill="#4a5568"/>
+  <rect x="325" y="156" width="30" height="8" rx="2" fill="#4a5568"/>
+
+  <!-- 相机主体 -->
+  <rect x="305" y="160" width="70" height="55" rx="6" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
+  <rect x="308" y="163" width="64" height="49" rx="4" fill="#1a1a2e"/>
+  <!-- 镜头 -->
+  <circle cx="340" cy="187" r="22" fill="#1a1a1a" stroke="#58a6ff" stroke-width="2"/>
+  <circle cx="340" cy="187" r="17" fill="#0a0a0a" stroke="#2a4a8a" stroke-width="1"/>
+  <circle cx="340" cy="187" r="12" fill="#050510" stroke="#58a6ff" stroke-width="1" opacity="0.8"/>
+  <circle cx="340" cy="187" r="7" fill="#0d1117" stroke="#3a6aaa" stroke-width="0.5"/>
+  <!-- 镜头反光 -->
+  <circle cx="335" cy="182" r="3" fill="white" opacity="0.15"/>
+  <circle cx="346" cy="193" r="1.5" fill="white" opacity="0.1"/>
+  <!-- 相机指示灯 -->
+  <circle cx="358" cy="168" r="4" fill="#ff4444">
+    <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- 补光灯环 -->
+  <circle cx="340" cy="187" r="26" fill="none" stroke="#ffd700" stroke-width="3" stroke-dasharray="4,3" opacity="0.6"/>
+  <!-- 光线射线 -->
+  <line x1="340" y1="215" x2="340" y2="240" stroke="#58a6ff" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+  <line x1="330" y1="215" x2="325" y2="240" stroke="#58a6ff" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+  <line x1="350" y1="215" x2="355" y2="240" stroke="#58a6ff" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+
+  <!-- 摄像头标签 -->
+  <rect x="288" y="222" width="104" height="18" rx="4" fill="#0a1628" stroke="#58a6ff" stroke-width="1"/>
+  <text x="340" y="234" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="bold">高清工业摄像头</text>
+
+  <!-- 视觉识别区域标注 -->
+  <rect x="225" y="240" width="270" height="120" rx="5" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.7"/>
+  <text x="360" y="257" text-anchor="middle" fill="#3fb950" font-size="9" opacity="0.8">视觉识别区域</text>
+
+  <!-- ===== 4. 机械臂分拣 ===== -->
+  <!-- 机械臂导轨 -->
+  <rect x="215" y="175" width="440" height="10" rx="3" fill="#2d3748" stroke="#4a5568" stroke-width="1"/>
+  <!-- 机械臂滑块 -->
+  <rect x="420" y="170" width="50" height="20" rx="3" fill="#4a5568" stroke="#718096" stroke-width="1"/>
+  <!-- 机械臂臂 -->
+  <rect x="440" y="190" width="10" height="45" rx="2" fill="#4a5568" stroke="#718096" stroke-width="1"/>
+  <!-- 关节 -->
+  <circle cx="445" cy="235" r="8" fill="#2d3748" stroke="#718096" stroke-width="2"/>
+  <!-- 下臂 -->
+  <rect x="437" y="235" width="10" height="40" rx="2" fill="#58a6ff" stroke="#79c0ff" stroke-width="1">
+    <animateTransform attributeName="transform" type="translate" values="0,0;60,0;60,0;-30,0;-30,0;0,0" dur="6s" repeatCount="indefinite"/>
+  </rect>
+  <!-- 吸嘴 -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0,0;60,0;60,0;-30,0;-30,0;0,0" dur="6s" repeatCount="indefinite"/>
+    <circle cx="442" cy="278" r="7" fill="#1a3a6a" stroke="#58a6ff" stroke-width="2"/>
+    <circle cx="442" cy="282" r="4" fill="#0a1a4a"/>
+  </g>
+
+  <!-- 机械臂标签 -->
+  <rect x="415" y="140" width="120" height="22" rx="4" fill="#1c2128" stroke="#30363d"/>
+  <text x="475" y="155" text-anchor="middle" fill="#c9d1d9" font-size="11" font-weight="bold">精密机械臂</text>
+
+  <!-- 连接线 - 摄像头到控制 -->
+  <path d="M 375 215 Q 420 185 660 200" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#arrow-blue)" opacity="0.7"/>
+  <text x="520" y="195" text-anchor="middle" fill="#58a6ff" font-size="9" opacity="0.8">图像数据</text>
+
+  <!-- 连接线 - 控制到机械臂 -->
+  <path d="M 660 265 Q 600 255 490 255" stroke="#f0883e" stroke-width="1.5" stroke-dasharray="5,3" fill="none" marker-end="url(#arrow-orange)" opacity="0.7"/>
+  <text x="585" y="250" text-anchor="middle" fill="#f0883e" font-size="9" opacity="0.8">控制指令</text>
+
+  <!-- ===== 5. AI控制系统 ===== -->
+  <!-- 控制柜主体 -->
+  <rect x="660" y="55" width="240" height="420" rx="10" fill="#1c2128" stroke="#30363d" stroke-width="2"/>
+  <rect x="665" y="60" width="230" height="410" rx="8" fill="#161b22"/>
+
+  <!-- 控制系统标题 -->
+  <rect x="675" y="68" width="210" height="28" rx="5" fill="url(#blue-grad)"/>
+  <text x="780" y="87" text-anchor="middle" fill="white" font-size="12" font-weight="bold">🤖 AI 视觉控制系统</text>
+
+  <!-- 显示屏 -->
+  <rect x="672" y="105" width="216" height="155" rx="6" fill="#0a0a1a" stroke="#30363d" stroke-width="2"/>
+  <rect x="675" y="108" width="210" height="149" rx="5" fill="url(#screen-grad)" clip-path="url(#screen-clip)"/>
+  <!-- 屏幕内容 -->
+  <!-- 摄像头画面模拟 -->
+  <rect x="678" y="111" width="100" height="75" rx="3" fill="#0a1020" stroke="#1a3a5a" stroke-width="1"/>
+  <text x="728" y="125" text-anchor="middle" fill="#3fb950" font-size="8" font-weight="bold">LIVE CAM</text>
+  <!-- 元件识别框 -->
+  <rect x="695" y="130" width="30" height="25" rx="1" fill="none" stroke="#3fb950" stroke-width="1" stroke-dasharray="2,1"/>
+  <text x="710" y="165" text-anchor="middle" fill="#3fb950" font-size="7">IC芯片 98.3%</text>
+  <rect x="735" y="133" width="22" height="18" rx="1" fill="none" stroke="#ffd700" stroke-width="1" stroke-dasharray="2,1"/>
+  <text x="746" y="162" text-anchor="middle" fill="#ffd700" font-size="7">电阻 95.1%</text>
+
+  <!-- 右侧分类结果 -->
+  <rect x="784" y="111" width="98" height="75" rx="3" fill="#050d15" stroke="#1a3a5a" stroke-width="1"/>
+  <text x="833" y="124" text-anchor="middle" fill="#58a6ff" font-size="8" font-weight="bold">分类结果</text>
+  <rect x="790" y="128" width="86" height="10" rx="2" fill="#1a3a2a"/>
+  <rect x="790" y="128" width="75" height="10" rx="2" fill="#2a6a4a"/>
+  <text x="790" y="137" fill="#3fb950" font-size="7">IC芯片 ████████ 78%</text>
+  <rect x="790" y="142" width="86" height="10" rx="2" fill="#1a2a0a"/>
+  <rect x="790" y="142" width="50" height="10" rx="2" fill="#4a5a2a"/>
+  <text x="790" y="151" fill="#9acd32" font-size="7">电阻  █████ 52%</text>
+  <rect x="790" y="156" width="86" height="10" rx="2" fill="#1a1a2a"/>
+  <rect x="790" y="156" width="35" height="10" rx="2" fill="#2a2a5a"/>
+  <text x="790" y="165" fill="#58a6ff" font-size="7">电容  ███▌ 36%</text>
+  <rect x="790" y="170" width="86" height="10" rx="2" fill="#2a1a1a"/>
+  <rect x="790" y="170" width="20" height="10" rx="2" fill="#5a2a2a"/>
+  <text x="790" y="179" fill="#f85149" font-size="7">缺陷  ██ 21%</text>
+
+  <!-- 神经网络可视化 -->
+  <rect x="678" y="192" width="100" height="58" rx="3" fill="#0a0a15" stroke="#1a1a3a" stroke-width="1"/>
+  <text x="728" y="204" text-anchor="middle" fill="#8b949e" font-size="7">神经网络推理</text>
+  <!-- 神经网络节点 -->
+  <g opacity="0.8">
+    <!-- 输入层 -->
+    <circle cx="692" cy="215" r="3" fill="#58a6ff"/>
+    <circle cx="692" cy="225" r="3" fill="#58a6ff"/>
+    <circle cx="692" cy="235" r="3" fill="#58a6ff"/>
+    <!-- 隐藏层1 -->
+    <circle cx="710" cy="212" r="3" fill="#3fb950"/>
+    <circle cx="710" cy="222" r="3" fill="#3fb950"/>
+    <circle cx="710" cy="232" r="3" fill="#3fb950"/>
+    <circle cx="710" cy="242" r="3" fill="#3fb950"/>
+    <!-- 隐藏层2 -->
+    <circle cx="728" cy="215" r="3" fill="#f0883e"/>
+    <circle cx="728" cy="225" r="3" fill="#f0883e"/>
+    <circle cx="728" cy="235" r="3" fill="#f0883e"/>
+    <!-- 输出层 -->
+    <circle cx="746" cy="218" r="3" fill="#ffd700"/>
+    <circle cx="746" cy="232" r="3" fill="#ffd700"/>
+    <!-- 连接线 -->
+    <line x1="695" y1="215" x2="707" y2="212" stroke="#58a6ff" stroke-width="0.5" opacity="0.5"/>
+    <line x1="695" y1="215" x2="707" y2="222" stroke="#58a6ff" stroke-width="0.5" opacity="0.5"/>
+    <line x1="695" y1="215" x2="707" y2="232" stroke="#58a6ff" stroke-width="0.5" opacity="0.5"/>
+    <line x1="695" y1="225" x2="707" y2="222" stroke="#58a6ff" stroke-width="0.5" opacity="0.5"/>
+    <line x1="695" y1="235" x2="707" y2="232" stroke="#58a6ff" stroke-width="0.5" opacity="0.5"/>
+    <line x1="713" y1="212" x2="725" y2="215" stroke="#3fb950" stroke-width="0.5" opacity="0.5"/>
+    <line x1="713" y1="222" x2="725" y2="225" stroke="#3fb950" stroke-width="0.5" opacity="0.5"/>
+    <line x1="713" y1="232" x2="725" y2="235" stroke="#3fb950" stroke-width="0.5" opacity="0.5"/>
+    <line x1="731" y1="215" x2="743" y2="218" stroke="#f0883e" stroke-width="0.5" opacity="0.5"/>
+    <line x1="731" y1="225" x2="743" y2="232" stroke="#f0883e" stroke-width="0.5" opacity="0.5"/>
+  </g>
+
+  <!-- 性能指标 -->
+  <rect x="784" y="192" width="98" height="58" rx="3" fill="#050d15" stroke="#1a3a5a" stroke-width="1"/>
+  <text x="833" y="204" text-anchor="middle" fill="#8b949e" font-size="7">系统状态</text>
+  <text x="790" y="216" fill="#3fb950" font-size="8">● 摄像头: 在线</text>
+  <text x="790" y="228" fill="#3fb950" font-size="8">● 机械臂: 运行中</text>
+  <text x="790" y="240" fill="#ffd700" font-size="8">● 检测速度: 12/s</text>
+  <text x="790" y="252" fill="#58a6ff" font-size="8">● 准确率: 99.2%</text>
+
+  <!-- 分隔线 -->
+  <line x1="675" y1="270" x2="875" y2="270" stroke="#30363d" stroke-width="1"/>
+
+  <!-- PLC 控制模块 -->
+  <rect x="675" y="278" width="95" height="70" rx="5" fill="#0d2040" stroke="#1a3a6a" stroke-width="1"/>
+  <text x="722" y="292" text-anchor="middle" fill="#79c0ff" font-size="9" font-weight="bold">PLC 控制器</text>
+  <rect x="682" y="298" width="80" height="6" rx="2" fill="#1a4a8a"/>
+  <rect x="682" y="308" width="80" height="6" rx="2" fill="#1a4a8a"/>
+  <rect x="682" y="318" width="80" height="6" rx="2" fill="#1a4a8a"/>
+  <!-- 指示灯 -->
+  <circle cx="686" cy="301" r="2.5" fill="#3fb950"/>
+  <circle cx="686" cy="311" r="2.5" fill="#3fb950"/>
+  <circle cx="686" cy="321" r="2.5" fill="#ffd700">
+    <animate attributeName="opacity" values="1;0.3;1" dur="0.8s" repeatCount="indefinite"/>
+  </circle>
+  <text x="692" y="302" fill="#8b949e" font-size="7">分拣信号 OUT1</text>
+  <text x="692" y="312" fill="#8b949e" font-size="7">传送控制 OUT2</text>
+  <text x="692" y="322" fill="#8b949e" font-size="7">报警输出 ALM</text>
+  <text x="722" y="340" text-anchor="middle" fill="#4a5568" font-size="7">SIEMENS S7-1200</text>
+  <text x="722" y="350" text-anchor="middle" fill="#4a5568" font-size="7">PLC</text>
+
+  <!-- 工控机 -->
+  <rect x="778" y="278" width="95" height="70" rx="5" fill="#0d2040" stroke="#1a3a6a" stroke-width="1"/>
+  <text x="825" y="292" text-anchor="middle" fill="#79c0ff" font-size="9" font-weight="bold">工控机 IPC</text>
+  <rect x="785" y="298" width="80" height="40" rx="2" fill="#050d15"/>
+  <text x="825" y="310" text-anchor="middle" fill="#3fb950" font-size="7">CPU: 12核 3.8GHz</text>
+  <text x="825" y="320" text-anchor="middle" fill="#3fb950" font-size="7">GPU: RTX 4090</text>
+  <text x="825" y="330" text-anchor="middle" fill="#3fb950" font-size="7">RAM: 64GB DDR5</text>
+  <text x="825" y="348" text-anchor="middle" fill="#4a5568" font-size="7">深度学习推理引擎</text>
+
+  <!-- AI模型信息 -->
+  <rect x="675" y="358" width="198" height="60" rx="5" fill="#0d1a10" stroke="#1a3a2a" stroke-width="1"/>
+  <text x="774" y="372" text-anchor="middle" fill="#3fb950" font-size="9" font-weight="bold">🧠 视觉识别模型</text>
+  <text x="685" y="386" fill="#8b949e" font-size="8">模型架构: YOLOv8 + ResNet50</text>
+  <text x="685" y="398" fill="#8b949e" font-size="8">训练样本: 50万+ 张</text>
+  <text x="685" y="410" fill="#8b949e" font-size="8">推理延迟: &lt; 30ms/帧</text>
+
+  <!-- ===== 6. 分拣通道和出料传送带 ===== -->
+
+  <!-- 通道分隔板 -->
+  <rect x="925" y="60" width="6" height="490" rx="2" fill="#2d3748"/>
+  <rect x="925" y="60" width="195" height="6" rx="2" fill="#2d3748"/>
+
+  <!-- 通道1: IC芯片 -->
+  <rect x="930" y="70" width="185" height="85" rx="5" fill="#0a1628" stroke="#58a6ff" stroke-width="1.5"/>
+  <rect x="930" y="70" width="185" height="22" rx="5" fill="#1a3a6a"/>
+  <text x="1022" y="85" text-anchor="middle" fill="white" font-size="11" font-weight="bold">通道 ① · IC 芯片</text>
+  <!-- 出料带 -->
+  <rect x="930" y="92" width="185" height="60" rx="3" fill="url(#belt-pattern)" opacity="0.8"/>
+  <!-- 元件 -->
+  <rect x="950" y="105" width="32" height="25" rx="2" fill="#1a1a2e" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="966" y="122" text-anchor="middle" fill="#58a6ff" font-size="7" font-weight="bold">IC</text>
+  <rect x="1010" y="107" width="28" height="22" rx="2" fill="#1a1a2e" stroke="#58a6ff" stroke-width="1.5"/>
+  <text x="1024" y="122" text-anchor="middle" fill="#58a6ff" font-size="7" font-weight="bold">IC</text>
+  <!-- 计数 -->
+  <text x="1095" y="130" text-anchor="middle" fill="#8b949e" font-size="9">已分拣: 247</text>
+  <!-- 箭头 -->
+  <line x1="1100" y1="122" x2="1112" y2="122" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+  <!-- 通道2: 电阻 -->
+  <rect x="930" y="165" width="185" height="85" rx="5" fill="#1a0a08" stroke="#f0883e" stroke-width="1.5"/>
+  <rect x="930" y="165" width="185" height="22" rx="5" fill="#5a2010"/>
+  <text x="1022" y="180" text-anchor="middle" fill="white" font-size="11" font-weight="bold">通道 ② · 电阻</text>
+  <rect x="930" y="187" width="185" height="60" rx="3" fill="url(#belt-pattern)" opacity="0.8"/>
+  <rect x="948" y="200" width="35" height="14" rx="2" fill="#c45c1a" stroke="#a04010" stroke-width="1"/>
+  <rect x="1005" y="201" width="35" height="14" rx="2" fill="#c45c1a" stroke="#a04010" stroke-width="1"/>
+  <rect x="1062" y="200" width="35" height="14" rx="2" fill="#c45c1a" stroke="#a04010" stroke-width="1"/>
+  <text x="1095" y="228" text-anchor="middle" fill="#8b949e" font-size="9">已分拣: 513</text>
+  <line x1="1100" y1="218" x2="1112" y2="218" stroke="#f0883e" stroke-width="2" marker-end="url(#arrow-orange)"/>
+
+  <!-- 通道3: 电容 -->
+  <rect x="930" y="260" width="185" height="85" rx="5" fill="#08101a" stroke="#79c0ff" stroke-width="1.5"/>
+  <rect x="930" y="260" width="185" height="22" rx="5" fill="#103050"/>
+  <text x="1022" y="275" text-anchor="middle" fill="white" font-size="11" font-weight="bold">通道 ③ · 电容</text>
+  <rect x="930" y="282" width="185" height="60" rx="3" fill="url(#belt-pattern)" opacity="0.8"/>
+  <ellipse cx="963" cy="312" rx="10" ry="13" fill="#3a8abd" stroke="#2a6a9d" stroke-width="1"/>
+  <ellipse cx="1000" cy="312" rx="10" ry="13" fill="#3a8abd" stroke="#2a6a9d" stroke-width="1"/>
+  <ellipse cx="1055" cy="312" rx="10" ry="13" fill="#3a8abd" stroke="#2a6a9d" stroke-width="1"/>
+  <text x="1095" y="323" text-anchor="middle" fill="#8b949e" font-size="9">已分拣: 389</text>
+  <line x1="1100" y1="312" x2="1112" y2="312" stroke="#79c0ff" stroke-width="2" marker-end="url(#arrow-white)"/>
+
+  <!-- 通道4: 电感 -->
+  <rect x="930" y="355" width="185" height="85" rx="5" fill="#081a10" stroke="#3fb950" stroke-width="1.5"/>
+  <rect x="930" y="355" width="185" height="22" rx="5" fill="#0d3a18"/>
+  <text x="1022" y="370" text-anchor="middle" fill="white" font-size="11" font-weight="bold">通道 ④ · 电感</text>
+  <rect x="930" y="377" width="185" height="60" rx="3" fill="url(#belt-pattern)" opacity="0.8"/>
+  <ellipse cx="960" cy="407" rx="13" ry="13" fill="#2d6a4f" stroke="#1b4332" stroke-width="1.5"/>
+  <ellipse cx="960" cy="407" rx="6" ry="6" fill="#1b4332"/>
+  <ellipse cx="1005" cy="407" rx="13" ry="13" fill="#2d6a4f" stroke="#1b4332" stroke-width="1.5"/>
+  <ellipse cx="1005" cy="407" rx="6" ry="6" fill="#1b4332"/>
+  <ellipse cx="1060" cy="407" rx="13" ry="13" fill="#2d6a4f" stroke="#1b4332" stroke-width="1.5"/>
+  <ellipse cx="1060" cy="407" rx="6" ry="6" fill="#1b4332"/>
+  <text x="1095" y="418" text-anchor="middle" fill="#8b949e" font-size="9">已分拣: 176</text>
+  <line x1="1100" y1="407" x2="1112" y2="407" stroke="#3fb950" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- 通道5: 不合格品 -->
+  <rect x="930" y="450" width="185" height="85" rx="5" fill="#1a0808" stroke="#f85149" stroke-width="1.5"/>
+  <rect x="930" y="450" width="185" height="22" rx="5" fill="#4a1010"/>
+  <text x="1022" y="465" text-anchor="middle" fill="white" font-size="11" font-weight="bold">通道 ⑤ · 不合格品</text>
+  <rect x="930" y="472" width="185" height="60" rx="3" fill="#1a0a0a" opacity="0.8"/>
+  <!-- 缺陷元件 -->
+  <rect x="950" y="485" width="32" height="25" rx="2" fill="#2a0a0a" stroke="#f85149" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <text x="966" y="502" text-anchor="middle" fill="#f85149" font-size="10">✕</text>
+  <rect x="1010" y="487" width="30" height="22" rx="2" fill="#2a0a0a" stroke="#f85149" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <text x="1025" y="502" text-anchor="middle" fill="#f85149" font-size="10">✕</text>
+  <text x="1095" y="510" text-anchor="middle" fill="#8b949e" font-size="9">已分拣: 32</text>
+  <!-- 警告标志 -->
+  <polygon points="1076,530 1085,545 1067,545" fill="#f85149" opacity="0.7"/>
+  <text x="1076" y="543" text-anchor="middle" fill="white" font-size="8" font-weight="bold">!</text>
+
+  <!-- 通道分隔线 -->
+  <line x1="930" y1="155" x2="1115" y2="155" stroke="#30363d" stroke-width="1"/>
+  <line x1="930" y1="250" x2="1115" y2="250" stroke="#30363d" stroke-width="1"/>
+  <line x1="930" y1="345" x2="1115" y2="345" stroke="#30363d" stroke-width="1"/>
+  <line x1="930" y1="440" x2="1115" y2="440" stroke="#30363d" stroke-width="1"/>
+
+  <!-- ===== 主流程箭头 ===== -->
+  <!-- 进料带到检测区 -->
+  <line x1="208" y1="299" x2="222" y2="299" stroke="#3fb950" stroke-width="3" marker-end="url(#arrow-green)"/>
+
+  <!-- 检测区到分拣通道的箭头 -->
+  <path d="M 505 280 Q 560 200 925 112" stroke="#58a6ff" stroke-width="2" fill="none" marker-end="url(#arrow-blue)" stroke-dasharray="6,3" opacity="0.8"/>
+  <path d="M 505 290 Q 580 270 925 207" stroke="#f0883e" stroke-width="2" fill="none" marker-end="url(#arrow-orange)" stroke-dasharray="6,3" opacity="0.8"/>
+  <path d="M 505 300 Q 590 300 925 302" stroke="#79c0ff" stroke-width="2" fill="none" marker-end="url(#arrow-white)" stroke-dasharray="6,3" opacity="0.8"/>
+  <path d="M 505 310 Q 580 330 925 397" stroke="#3fb950" stroke-width="2" fill="none" marker-end="url(#arrow-green)" stroke-dasharray="6,3" opacity="0.8"/>
+  <path d="M 505 318 Q 570 380 925 492" stroke="#f85149" stroke-width="2" fill="none" marker-end="url(#arrow-orange)" stroke-dasharray="6,3" opacity="0.7"/>
+
+  <!-- 箭头标签 -->
+  <rect x="620" y="160" width="80" height="16" rx="3" fill="#0a1628" opacity="0.8"/>
+  <text x="660" y="172" text-anchor="middle" fill="#8b949e" font-size="9">分拣导向</text>
+
+  <!-- ===== 步骤编号标注 ===== -->
+  <!-- 步骤1 -->
+  <circle cx="100" cy="460" r="14" fill="#1a3a6a" stroke="#58a6ff" stroke-width="2"/>
+  <text x="100" y="465" text-anchor="middle" fill="white" font-size="12" font-weight="bold">1</text>
+  <text x="100" y="482" text-anchor="middle" fill="#58a6ff" font-size="9">元件进料</text>
+
+  <!-- 步骤2 -->
+  <circle cx="360" cy="460" r="14" fill="#1a4a2a" stroke="#3fb950" stroke-width="2"/>
+  <text x="360" y="465" text-anchor="middle" fill="white" font-size="12" font-weight="bold">2</text>
+  <text x="360" y="482" text-anchor="middle" fill="#3fb950" font-size="9">视觉识别</text>
+
+  <!-- 步骤3 -->
+  <circle cx="460" cy="460" r="14" fill="#3a2a0a" stroke="#f0883e" stroke-width="2"/>
+  <text x="460" y="465" text-anchor="middle" fill="white" font-size="12" font-weight="bold">3</text>
+  <text x="460" y="482" text-anchor="middle" fill="#f0883e" font-size="9">机械分拣</text>
+
+  <!-- 步骤4 -->
+  <circle cx="780" cy="460" r="14" fill="#2a1a3a" stroke="#bc8cff" stroke-width="2"/>
+  <text x="780" y="465" text-anchor="middle" fill="white" font-size="12" font-weight="bold">4</text>
+  <text x="780" y="482" text-anchor="middle" fill="#bc8cff" font-size="9">AI决策</text>
+
+  <!-- 步骤5 -->
+  <circle cx="1022" cy="570" r="14" fill="#0a2a3a" stroke="#79c0ff" stroke-width="2"/>
+  <text x="1022" y="575" text-anchor="middle" fill="white" font-size="12" font-weight="bold">5</text>
+  <text x="1022" y="592" text-anchor="middle" fill="#79c0ff" font-size="9">分类出料</text>
+
+  <!-- ===== 统计信息 ===== -->
+  <rect x="672" y="430" width="198" height="50" rx="5" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="771" y="446" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="bold">今日统计</text>
+  <text x="685" y="460" fill="#3fb950" font-size="9">总检测: 1,357 件</text>
+  <text x="685" y="472" fill="#3fb950" font-size="9">合格率: 97.6% ▲</text>
+  <text x="800" y="460" fill="#58a6ff" font-size="9">吞吐量: 12件/秒</text>
+  <text x="800" y="472" fill="#f85149" font-size="9">不良率: 2.4%</text>
+
+  <!-- 运行时间 -->
+  <text x="780" y="500" text-anchor="middle" fill="#4a5568" font-size="9">运行时间: 02:47:33 ▶</text>
+
+  <!-- 标题和版权 -->
+  <text x="570" y="590" text-anchor="middle" fill="#30363d" font-size="10">基于深度学习视觉模型的电子元器件智能分拣产线 · 示意图</text>
+
+</svg>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>进料传送带 / 检测区域</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>图像采集 / IC芯片通道</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f0883e"></div>AI控制系统 / 电阻通道</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#79c0ff"></div>电容分拣通道</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>不合格品通道</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#bc8cff"></div>机械臂分拣执行</div>
+</div>
+
+<div class="step-numbers">
+  <div class="step-item">
+    <div class="step-num" style="background:#1a3a6a;color:#58a6ff;border:2px solid #58a6ff">1</div>
+    <div class="step-text"><strong style="color:#c9d1d9">进料传送带</strong><br>通过绿色传送带将混合元器件输送至检测区域</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num" style="background:#1a4a2a;color:#3fb950;border:2px solid #3fb950">2</div>
+    <div class="step-text"><strong style="color:#c9d1d9">视觉识别</strong><br>高清工业摄像头+补光系统拍摄，AI模型实时分类</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num" style="background:#3a2a0a;color:#f0883e;border:2px solid #f0883e">3</div>
+    <div class="step-text"><strong style="color:#c9d1d9">精密分拣</strong><br>PLC控制机械臂按识别结果将元件放入对应通道</div>
+  </div>
+  <div class="step-item">
+    <div class="step-num" style="background:#0a2a3a;color:#79c0ff;border:2px solid #79c0ff">4</div>
+    <div class="step-text"><strong style="color:#c9d1d9">分类出料</strong><br>各通道传送带将同类元器件输出至下游工序</div>
+  </div>
+</div>
+
+</body>
+</html>
